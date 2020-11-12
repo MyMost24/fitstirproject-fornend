@@ -1,7 +1,10 @@
+import axios from "@/plugins/axios";
+
 export default {
     namespaced: true,
     state: {
-        user: null
+        user: null,
+        userProfile: {},
     },
     mutations: {
         setUser: function (state, data) {
@@ -96,22 +99,7 @@ export default {
                     return null
                 })
         },
-        async updateUser(context, params) {
-            if (params.profile) { // we don't send profile_date to server for now because l lazy to manage image_profile .
-                //In Current data ,we sent ImageURL but server need  ImageFile .
-                delete params.profile  // if you want to update profile , you must update serializer and viewSet on server-side for Ignore Image_data.
-            }
-            let id = params.id
-            return await axios.put('/rest-auth/user/', params)
-                .then((response) => {
-                    context.commit('setUser', response.data)
-                    context.dispatch("success/setSuccess", response.data, {root: true})
-                    return response.data
-                }).catch((error) => {
-                    context.dispatch("error/setError", error.response.data, {root: true});
-                    return null
-                })
-        },
+
         async changePassword(context, params) {
 
             return await axios.post('/rest-auth/password/change/', params)
@@ -122,6 +110,64 @@ export default {
                     context.dispatch("error/setError", error.response.data, {root: true});
                     return null
                 })
+        },
+
+        async getUserProfile(context, id){
+            let data = await axios.get(`/api/userprofile/${id}`)
+                .then((r) => {
+
+                    return r.data;
+                })
+                .catch(async (e) => {
+                    return false;
+                });
+            return data
+
+        },
+        async getUserUpdate(context, id){
+            let data = await axios.get(`/api/user/${id}`)
+                .then((r) => {
+
+                    return r.data;
+                })
+                .catch(async (e) => {
+                    return false;
+                });
+            return data
+
+        },
+        async updateUser(context, params){
+            let data = await axios.put(`/api/user/${params.id}`, params)
+                .then((r) => {
+                    return r.data;
+                })
+                .catch(async (e) => {
+                    return false;
+                });
+            return data
+
+        },
+        async updateUserDetail(context, params){
+            var formData = new FormData();
+            if (typeof (params.image) ===  'object') {
+                formData.append('image', params.image)
+            }
+            formData.append('address',params.address)
+            formData.append('phone_number',params.phone_number)
+            formData.append('birthday',params.birthday)
+            formData.append('bmi',params.bmi)
+            formData.append('weight',params.weight)
+            formData.append('high',params.high)
+            formData.append('user',params.user)
+            let data = await axios.put(`/api/userprofile/${params.id}`,  formData)
+                .then((r) => {
+                    return r.data;
+                })
+                .catch(async (e) => {
+                    return false;
+                });
+            return data
+
         }
 
     },
